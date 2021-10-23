@@ -1,0 +1,26 @@
+//function import is just like function module which will return or not return the value
+//for one odata service , all the function import will code at EXECUTE_ACTION method
+//it is used only for GET/POST
+
+TYPES:
+      BEGIN OF ts_product,
+        product_id  TYPE snwd_product_id,
+        type_code   TYPE snwd_product_type_code,
+        category    TYPE snwd_product_category,
+        name        TYPE snwd_desc,
+        description TYPE snwd_desc,
+      END OF ts_product .
+    DATA: itab TYPE TABLE OF ts_product.
+    DATA: ls TYPE ts_product.
+
+    CASE iv_action_name.
+      WHEN 'function_product' OR 'FUNCTION_PRODUCT'.
+        READ TABLE it_parameter INTO DATA(lwa_parameter) INDEX 1.
+        DATA(lv_des) = lwa_parameter-value.
+        READ TABLE it_parameter INTO lwa_parameter INDEX 2.
+        DATA(lv_name) = lwa_parameter-value.
+        SELECT * FROM snwd_pd INTO CORRESPONDING FIELDS OF TABLE itab
+        WHERE  category = lv_des.
+        copy_data_to_ref( EXPORTING is_data = itab CHANGING cr_data = er_data ).
+    ENDCASE.
+  ENDMETHOD.
