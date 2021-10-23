@@ -1,0 +1,52 @@
+
+
+
+SELECT F1 , F2 FROM TABLE INTO TABLE ITAB
+WHERE F = XYZ.
+
+DATA : o_alv   TYPE REF TO cl_salv_table,  "Object of class cl-salv_table  "gr_table
+     o_cols   TYPE REF TO cl_salv_columns,      "gr_coloumns
+     o_col   TYPE REF TO cl_salv_column,     "gr_coloumn
+     lv_msg   TYPE REF TO cx_salv_msg, "#EC NEEDED "Catching exceptions
+     ##NEEDED
+     lv_msg1  TYPE REF TO cx_salv_not_found,
+     o_function TYPE REF TO cl_salv_functions_list. "For setting PF-Status
+ DATA: lr_columns TYPE REF TO cl_salv_columns_table.
+ DATA:lo_layout TYPE REF TO cl_salv_layout.
+ DATA:ls_key TYPE salv_s_layout_key.
+ "DATA : alv_column TYPE REF TO cl_salv_column_table.
+ TRY.
+   CALL METHOD cl_salv_table=>factory
+    IMPORTING
+     r_salv_table = o_alv
+    CHANGING
+     t_table   = ITAM.
+  CATCH cx_salv_msg INTO lv_msg.           "#EC NO_HANDLER
+ ENDTRY.
+ lr_columns = o_alv->get_columns( ).
+ lo_layout = o_alv->get_layout( ).
+ lo_layout->set_save_restriction( if_salv_c_layout=>restrict_none ).
+ lr_columns = o_alv->get_columns( ).
+ ls_key-report = sy-repid.
+ lo_layout->set_key( ls_key ).
+ lr_columns->set_optimize( 'X' ).
+ TRY.
+   o_cols = o_alv->get_columns( ).
+   o_col = o_cols->get_column( 'FIELD1' ).
+   o_col->set_long_text( TEXT-002 ).
+   o_col->set_medium_text( ' ' ).
+   o_col->set_short_text( ' ' ).
+  CATCH cx_salv_not_found INTO lv_msg1.       "#EC NO_HANDLER
+ ENDTRY.
+ TRY.
+   o_cols = o_alv->get_columns( ).
+   o_col = o_cols->get_column( 'FIELD2' ).
+   o_col->set_long_text( TEXT-002 ).
+   o_col->set_medium_text( ' ' ).
+   o_col->set_short_text( ' ' ).
+  CATCH cx_salv_not_found INTO lv_msg1.       "#EC NO_HANDLER
+ ENDTRY.
+ o_function = o_alv->get_functions( ).
+ o_function->set_all( ).
+ " Calling Display method
+ CALL METHOD o_alv->display( ).
