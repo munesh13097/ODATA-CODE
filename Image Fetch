@@ -1,0 +1,54 @@
+//get image from the database
+//we will use MEDIA as a resource for a entity
+//$value we need to use in the querry so that GET_STREAM will trigger
+//when deal with image ---> mime type and url is needed to get the result
+
+ CASE iv_entity_name.
+      WHEN 'Product'.
+        READ TABLE it_key_tab INTO DATA(lwa_key_tab) INDEX 1.
+        DATA: lwa_productid TYPE bapi_epm_product_id.
+        DATA: lwa_headerdata TYPE bapi_epm_product_header.
+        lwa_productid-product_id = lwa_key_tab-value.
+        CALL FUNCTION 'BAPI_EPM_PRODUCT_GET_DETAIL'
+          EXPORTING
+            product_id = lwa_productid
+          IMPORTING
+            headerdata = lwa_headerdata.
+        IF lwa_headerdata IS NOT INITIAL.
+          DATA: lv_url TYPE string.
+          DATA: lv_mime TYPE string.
+          DATA: lo_api TYPE REF TO if_mr_api.
+          DATA: lv_content TYPE xstring.
+          CALL METHOD cl_mime_repository_api=>if_mr_api~get_api
+            RECEIVING
+              r_mr_api = lo_api.
+          IF lo_api IS BOUND.
+            lv_url = lwa_headerdata-product_pic_url.
+            CALL METHOD lo_api->get
+              EXPORTING
+                i_url       = lv_url
+              IMPORTING
+                e_mime_type = lv_mime
+                e_content   = lv_content.
+            IF lv_mime IS NOT INITIAL AND lv_content IS NOT INITIAL.
+              TYPES:
+                BEGIN OF ty_s_media_resource,
+                  mime_type TYPE string,
+                  value     TYPE xstring,
+                END OF ty_s_media_resource .
+              DATA: lwa_media TYPE ty_s_media_resource.
+              lwa_media-mime_type = lv_mime.
+              lwa_media-value = lv_content.
+              DATA: lo_object TYPE REF TO zcl_zmedia_dpc_ext.
+             copy_data_to_ref(
+                EXPORTING
+                  is_data = lwa_media
+                CHANGING
+                  cr_data = er_stream ).
+            ENDIF.
+          ENDIF.
+        ENDIF.
+    ENDCASE.
+    
+
+
