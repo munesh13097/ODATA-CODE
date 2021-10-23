@@ -1,0 +1,61 @@
+//Association and Navigation is used to navigate to other entity and fetch the data for the respective previous entity
+//Association is called NAMED RELATIONSHIP
+//Navigation always create at Principal entity
+//Principal entity is the source entity
+//Must required association to perform the task
+//let assume SALESORDER HEADER AND SALESORDER ITEM , the relationship is 1:N
+//We need to redefine all the GET_ENTITY/GET_ENTITYSET method to perform the task
+// Querry: service name/enityset_name('value')/navi1/nav2....
+//sap/opu/odata/SAP/ZSL_EPM_DEMO_SRV/SalesOrderSet(‘500000000’)/ToOrderItems
+//we can achieve the same by $expand which is more good way to do
+
+DATA:      ls_max_rows   TYPE bapi_epm_max_rows,
+           lv_so_id      TYPE bapi_epm_so_id,
+           lt_orderitems TYPE TABLE OF bapi_epm_so_item,
+           ls_orderitems TYPE bapi_epm_so_item,
+           lwa_key_tab   TYPE /iwbep/s_mgw_name_value_pair,
+           ls_entityset  TYPE zcl_zdemo_gw_srv_mpc=>ts_orderitems.
+
+* To get the Sales Order#
+    READ TABLE it_key_tab INTO lwa_key_tab WITH KEY name = 'SoId'.
+    IF sy-subrc = 0.
+      lv_so_id = lwa_key_tab-value.
+    ENDIF.
+
+* if Sales Order is not available in the request,retrieve
+* first 20 Sales Orders Items
+    IF lv_so_id IS INITIAL.
+      ls_max_rows-bapimaxrow = 20.
+      CALL FUNCTION 'BAPI_EPM_SO_GET_LIST'
+        EXPORTING
+          max_rows   = ls_max_rows
+        TABLES
+          soitemdata = lt_orderitems.
+      IF lt_orderitems IS NOT INITIAL.
+        LOOP AT lt_orderitems INTO ls_orderitems.
+          MOVE-CORRESPONDING ls_orderitems TO ls_entityset.
+          APPEND ls_entityset TO et_entityset.
+        ENDLOOP.
+      ENDIF.
+    ELSE.
+
+* if Sales Order is available in the request,retrieve
+* it's Order Items
+      CALL FUNCTION 'CONVERSION_EXIT_ALPHA_INPUT'
+        EXPORTING
+          input  = lv_so_id
+        IMPORTING
+          output = lv_so_id.
+
+      CALL FUNCTION 'BAPI_EPM_SO_GET_DETAIL'
+        EXPORTING
+          so_id    = lv_so_id
+        TABLES
+          itemdata = lt_orderitems.
+      IF lt_orderitems IS NOT INITIAL.
+        LOOP AT lt_orderitems INTO ls_orderitems.
+          MOVE-CORRESPONDING ls_orderitems TO ls_entityset.
+          APPEND ls_entityset TO et_entityset.
+        ENDLOOP.
+      ENDIF.
+    ENDIF.
