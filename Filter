@@ -1,0 +1,51 @@
+//filter is used as range
+//it is used to find the data on the basis of range value
+
+ DATA: lt_headerdata TYPE TABLE OF bapi_epm_product_header.
+    DATA: ls_entity LIKE LINE OF et_entityset.
+    DATA: lt_orderby TYPE /iwbep/t_mgw_tech_order.
+    DATA: lt_sort TYPE abap_sortorder_tab.
+    DATA: ls_sort LIKE LINE OF lt_sort.
+    DATA: lt_filter_bapi TYPE TABLE OF bapi_epm_product_id_range.
+    DATA: ls_filter_bapi TYPE  bapi_epm_product_id_range.
+    DATA: lv_top TYPE string.
+    DATA:lwa_top TYPE bapi_epm_max_rows.
+
+    CALL METHOD io_tech_request_context->get_top
+      RECEIVING
+        rv_top = lv_top.
+
+    IF it_filter_select_options IS NOT INITIAL.
+      LOOP AT it_filter_select_options INTO DATA(ls_filter_option).
+        CASE ls_filter_option-property.
+          WHEN 'PRODUCT_ID'.
+            LOOP AT ls_filter_option-select_options INTO DATA(lwa_filter_options).
+              ls_filter_bapi-sign = lwa_filter_options-sign.
+              ls_filter_bapi-option = lwa_filter_options-option.
+              ls_filter_bapi-low = lwa_filter_options-low.
+              ls_filter_bapi-high = lwa_filter_options-high.
+              APPEND ls_filter_bapi TO lt_filter_bapi.
+              CLEAR:ls_filter_bapi,lwa_filter_options.
+            ENDLOOP.
+          WHEN 'NAME'.
+            LOOP AT ls_filter_option-select_options INTO lwa_filter_options.
+              ls_filter_bapi-sign = lwa_filter_options-sign.
+              ls_filter_bapi-option = lwa_filter_options-option.
+              ls_filter_bapi-low = lwa_filter_options-low.
+              ls_filter_bapi-high = lwa_filter_options-high.
+              APPEND ls_filter_bapi TO lt_filter_bapi.
+              CLEAR:ls_filter_bapi,lwa_filter_options.
+            ENDLOOP.
+
+        ENDCASE.
+        CLEAR:ls_filter_option.
+      ENDLOOP.
+    ENDIF.
+
+    lwa_top-bapimaxrow = lv_top.
+    CALL FUNCTION 'BAPI_EPM_PRODUCT_GET_LIST'
+      EXPORTING
+        max_rows   = lwa_top
+      TABLES
+        headerdata = lt_headerdata
+     selparamproductid = lt_filter_bapi.
