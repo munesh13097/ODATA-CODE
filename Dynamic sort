@@ -1,0 +1,43 @@
+//dynamic sort used to sort the data by multiple fields
+//we can achieve this by ABAP_SORTORDER_TAB
+
+DATA: lt_headerdata TYPE TABLE OF bapi_epm_product_header.
+    DATA: ls_entity LIKE LINE OF et_entityset.
+    DATA: lt_orderby TYPE /iwbep/t_mgw_tech_order.
+    DATA: lt_sort TYPE abap_sortorder_tab.
+    DATA: ls_sort LIKE LINE OF lt_sort.
+    DATA: lt_filter_bapi TYPE TABLE OF bapi_epm_product_id_range.
+    DATA: ls_filter_bapi TYPE  bapi_epm_product_id_range.
+    DATA: lv_top TYPE string.
+    DATA:lwa_top TYPE bapi_epm_max_rows.
+
+    lwa_top-bapimaxrow = lv_top.
+    CALL FUNCTION 'BAPI_EPM_PRODUCT_GET_LIST'
+      EXPORTING
+        max_rows   = lwa_top
+      TABLES
+        headerdata = lt_headerdata
+     selparamproductid = lt_filter_bapi.
+
+    CHECK lt_headerdata IS NOT INITIAL.
+    LOOP AT lt_headerdata INTO DATA(wa_headerdata).
+      MOVE-CORRESPONDING wa_headerdata TO ls_entity.
+      APPEND ls_entity TO et_entityset.
+      CLEAR: ls_entity , wa_headerdata.
+    ENDLOOP.
+    CALL METHOD io_tech_request_context->get_orderby
+      RECEIVING
+        rt_orderby = lt_orderby.
+    IF lt_orderby IS NOT INITIAL.
+      LOOP AT lt_orderby INTO DATA(ls_orderyby).
+        ls_sort-name = ls_orderyby-property.
+        IF ls_orderyby-order = 'desc'.
+          ls_sort-descending = abap_true.
+        ELSE.
+          ls_sort-descending = ''.
+        ENDIF.
+        APPEND ls_sort TO lt_sort.
+        CLEAR: ls_sort.
+      ENDLOOP.
+      SORT et_entityset BY (lt_sort).
+    ENDIF.
