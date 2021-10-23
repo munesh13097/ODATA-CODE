@@ -2,14 +2,57 @@
 //$value is used in query and GET_STREAM method will be used
 //CONVERT_OTF is used to give the data to xstring which will pass to MEDIA RESOURCE workarea
 
- READ TABLE it_key_tab INTO DATA(ls_key_tab) INDEX 1.
+   METHOD /iwbep/if_mgw_appl_srv_runtime~get_stream.
+    READ TABLE it_key_tab INTO DATA(ls_key_tab) INDEX 1.
     DATA: lv_formname TYPE string.
     lv_formname = ls_key_tab-value.
-    DATA: lt_output TYPE  ssfcrescl.
+    DATA: lt_output             TYPE  ssfcrescl,
+          lv_devtype            TYPE rspoptype,
+          ls_control_parameters TYPE ssfctrlop,
+          ls_output_data        TYPE ssfcrescl,
+          lv_language           TYPE tdspras,
+          ls_output_options      TYPE ssfcompop.
 
-    CALL FUNCTION lv_formname
+
+
+    ls_control_parameters-langu = lv_language.
+* set control parameters to get the output text format (OTF) from Smart Forms
+    ls_control_parameters-no_dialog = 'X'.
+    ls_control_parameters-getotf   = 'X'.
+    ls_control_parameters-preview = space.
+
+    lv_language = sy-langu.
+    TRANSLATE lv_language TO UPPER CASE.
+
+    CALL FUNCTION 'SSF_GET_DEVICE_TYPE'
+      EXPORTING
+        i_language             = lv_language
       IMPORTING
-        job_output_info = lt_output.
+        e_devtype              = lv_devtype
+      EXCEPTIONS
+        no_language            = 1
+        language_not_installed = 2
+        no_devtype_found       = 3
+        system_error           = 4
+        OTHERS                 = 5.
+
+    ls_output_options-tdprinter = lv_devtype.
+    ls_output_options-tdnewid = 'X'. "print parameters,
+    ls_output_options-tddelete = space. "print parameters
+
+      call function '/1BCDWB/SF00000095'
+      exporting
+      control_parameters = ls_control_parameters
+      output_options    = ls_output_options
+      user_settings     = space
+        importing
+          job_output_info  = lt_output
+        exceptions
+          formatting_error = 1
+          internal_error   = 2
+          send_error       = 3
+          user_canceled    = 4
+          others           = 5.
     IF sy-subrc <> 0.
 
     ENDIF.
@@ -34,4 +77,7 @@
     ls_stream-value = lv_pdf_xstring.
     ls_stream-mime_type = 'application/pdf'.
     copy_data_to_ref( EXPORTING is_data = ls_stream
+                        CHANGING  cr_data = er_stream ).
+
+  ENDMETHOD.
                         CHANGING  cr_data = er_stream ).
