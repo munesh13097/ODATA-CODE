@@ -1,0 +1,88 @@
+//$EXPAND used to get data from multiple entity in a single call
+//GETEXPANDED_ENTITY/GETEXPANDED_ENTITYSET will redefine
+//$expand require Association/Navigation too
+// service_name/entiyset('value')?$expand=nav1/nav2........
+
+METHOD /iwbep/if_mgw_appl_srv_runtime~get_expanded_entityset.
+
+  DATA:  BEGIN OF t_expand_so.
+
+  INCLUDE             TYPE zcl_ztest_dp_expand_mpc_ext=>ts_salesorder.
+
+  DATA: ordertoitems  TYPE zcl_ztest_dp_expand_mpc_ext=>tt_salesorderitem,
+
+       END OF t_expand_so.
+
+  DATA: lt_expand_so   LIKE  TABLE OF t_expand_so,
+
+        ls_expand_so   LIKE t_expand_so,
+
+        ls_item        TYPE zcl_ztest_dp_expand_mpc_ext=>ts_salesorderitem.
+
+  DATA: lt_salesorder  TYPE TABLE OF bapi_epm_so_header,
+
+        ls_salesorder LIKE LINE OF lt_salesorder,
+
+        lt_itemdata   TYPE TABLE OF bapi_epm_so_item,
+
+        ls_itemdata   TYPE  bapi_epm_so_item,
+
+        l_max_rows    TYPE bapi_epm_max_rows.
+
+  CONSTANTS: lc_expand_tech_clause TYPE string VALUE 'ORDERTOITEMS'.
+
+* Read Sales Order and Item data
+
+  l_max_rows-bapimaxrow = '10'.
+
+  CALL FUNCTION 'BAPI_EPM_SO_GET_LIST'
+
+    EXPORTING
+
+      max_rows    = l_max_rows
+
+    TABLES
+
+      soheaderdata = lt_salesorder
+
+      soitemdata  = lt_itemdata.
+
+* Data processing logic
+
+  LOOP AT lt_salesorder INTO ls_salesorder.
+
+    MOVE-CORRESPONDING ls_salesorder TO ls_expand_so  .
+
+    LOOP AT lt_itemdata INTO ls_itemdata WHERE so_id = ls_salesorder-so_id .
+
+      MOVE-CORRESPONDING ls_itemdata TO ls_item  .
+
+      APPEND ls_item  TO ls_expand_so-ordertoitems.
+
+      CLEAR: ls_item.
+
+    ENDLOOP.
+
+    APPEND ls_expand_so  TO lt_expand_so.
+
+    CLEAR: ls_expand_so.
+
+  ENDLOOP.
+
+* Fill EE_ENTITYSET
+
+  copy_data_to_ref(
+
+    EXPORTING
+
+      is_data = lt_expand_so
+
+    CHANGING
+
+      cr_data = er_entityset ).
+
+* Insert Navigation property into ET_EXPANDED_TECH_CLAUSES
+
+  INSERT lc_expand_tech_clause INTO TABLE et_expanded_tech_clauses.
+
+ENDMETHOD.
