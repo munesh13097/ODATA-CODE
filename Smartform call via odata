@@ -1,0 +1,37 @@
+//smartform call is same as image
+//$value is used in query and GET_STREAM method will be used
+//CONVERT_OTF is used to give the data to xstring which will pass to MEDIA RESOURCE workarea
+
+ READ TABLE it_key_tab INTO DATA(ls_key_tab) INDEX 1.
+    DATA: lv_formname TYPE string.
+    lv_formname = ls_key_tab-value.
+    DATA: lt_output TYPE  ssfcrescl.
+
+    CALL FUNCTION lv_formname
+      IMPORTING
+        job_output_info = lt_output.
+    IF sy-subrc <> 0.
+
+    ENDIF.
+    DATA: lt_tstotf              TYPE tsfotf.
+    APPEND LINES OF lt_output-otfdata[] TO lt_tstotf[].
+
+    DATA:lt_lines       TYPE TABLE OF tline,
+         lv_pdf_len     TYPE i,
+         lv_pdf_xstring TYPE xstring.
+
+    CALL FUNCTION 'CONVERT_OTF'
+      EXPORTING
+        format       = 'PDF'
+      IMPORTING
+        bin_filesize = lv_pdf_len
+        bin_file     = lv_pdf_xstring
+      TABLES
+        otf          = lt_tstotf
+        lines        = lt_lines.
+
+    DATA: ls_stream   TYPE ty_s_media_resource.
+    ls_stream-value = lv_pdf_xstring.
+    ls_stream-mime_type = 'application/pdf'.
+    copy_data_to_ref( EXPORTING is_data = ls_stream
+                        CHANGING  cr_data = er_stream ).
