@@ -1,6 +1,7 @@
 // PAGING MEANS $TOP AND $SKIP
 //it means skip n records and display n records
 //this happen because of to get reduced the data from database
+//Paging is used for faster access to data
 
 //code:
  DATA(lv_top) = is_paging-top.
