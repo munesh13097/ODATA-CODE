@@ -1,0 +1,25 @@
+// PAGING MEANS $TOP AND $SKIP
+//it means skip n records and display n records
+//this happen because of to get reduced the data from database
+
+//code:
+ DATA(lv_top) = is_paging-top.
+    DATA(lv_skip) = is_paging-skip.
+    DATA: ls_ekko TYPE zcl_zpaging_01_mpc_ext=>ts_purchase.
+    DATA:lv_count TYPE i.
+
+
+      SELECT * FROM ekko INTO TABLE @DATA(lt_ekko).
+      SORT lt_ekko BY ebeln.
+
+      LOOP AT lt_ekko INTO DATA(lwa_ekko).
+        IF sy-tabix > lv_skip.
+          lv_count = lv_count + 1.
+          MOVE-CORRESPONDING lwa_ekko TO ls_ekko.
+          APPEND ls_ekko TO et_entityset.
+          if lv_top is not initial.
+          CHECK lv_count = lv_top.
+          RETURN.
+          endif.
+        ENDIF.
+      ENDLOOP.
