@@ -1,0 +1,25 @@
+An OData server consists of OData Producers and an HTTP server.
+
+OData Producers:-
+In SQL Anywhere, an OData Producer is a Java Servlet that uses the JDBC API to connect to a database server. An OData Producer processes OData requests and interfaces with the database.
+The following table illustrates how an OData Producer maps OData concepts to relational database concepts:
+OData Concept	Database Equivalent
+Entity
+Row
+Entity type
+Table or view schema
+Entity Set
+Table rows, where each row is an entity type instance
+Key
+Primary key
+Association and Navigation Properties
+Foreign key
+Property
+Column or column value
+
+HTTP server:-
+
+An HTTP Server
+An HTTP server handles OData requests from web clients.
+
+The database server uses the Jetty WebServer as its HTTP server for OData. This HTTP server acts as a Java Servlet container, which is required to host OData Producers
