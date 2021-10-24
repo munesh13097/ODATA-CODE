@@ -1,0 +1,11 @@
+//this is used to get the data + count of data
+
+select * from vbak into table lt_vbak.
+
+loop at lt_vbak into data(ls_vbak).
+move-corresponding ls_vbak to ls_entityset.
+append ls_entityset to er_entityst.
+endloop.
+
+data(lv_count) = lines( er_entityset ).
+ES_RESPONSE_CONTEXT-inlinecount = lv_count.
