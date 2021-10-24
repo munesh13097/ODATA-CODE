@@ -1,0 +1,7 @@
+/IWFND/MAINT_SERVICE	Activate and Maintain Services
+/IWFND/CACHE_CLEANUP	Cleanup of Model Cache
+/IWFND/CLEANUP	Execute Cleanup
+/IWFND/ERROR_LOG	Gateway Error Log
+/IWFND/EXPLORER	Service Explorer
+/IWFND/GW_CLIENT	Gateway Client
+/IWFND/VIEW_LOG	Gateway Application Log Viewer
