@@ -1,0 +1,9 @@
+Complex types consist of a list of properties with no key, and can therefore only exist as properties of a containing entity or as a temporary value. 
+You can use complex types to group fields together without exposing them as an independent OData entity. 
+Complex types can contain complex types, that is, they can be deep. 
+Within a complex type the cardinality is always 1:1.
+
+1)Create Complex type by right click
+2)Add properties related to complex type
+3)Create enity and remove the structure name from entity
+4)Add the complex type in the enttiy
